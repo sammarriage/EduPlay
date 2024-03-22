@@ -1,0 +1,5 @@
+ROOT=.
+TARGET=NUCLEO_G071RB
+TARGET_CODE=0729
+DEVICE_ID[/home/studio/workspace/111lcd-display]=066DFF484971754867102954
+DEVICE_TYPE[/home/studio/workspace/111lcd-display]=connected
