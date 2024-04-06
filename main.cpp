@@ -69,9 +69,27 @@ void displayAnswer(int x, int y, int z){
 int x, y, op, varience, answer1, answer2;
 int score = 0;
 int elapsedSeconds = 15;
+bool menu = true;
 const char* operators[4] = {"+", "-", "*", "//"};
 int (*operations[4])(int, int) = {add, subtract, multiply, divide};
-Timer timer;
+
+// Main menu function
+void mainMenu(){
+    if (menu){ // Displays the menu if the menu variable is true
+        lcd.cls(); // Clears the display
+        lcd.locate(1,0); // Sets the cursor to column 1 and row 0
+        lcd.printf("EduPlay Maths!"); // Displays the text 'EduPlay Maths!'
+        lcd.locate(0,1); // Sets the cursor to column 0 and row 1
+        lcd.printf("Press any button"); // Displays the text 'Press any button'
+        score = 0; // Resets the score 
+        while (menu){
+            // Continuously checks to see if a button has been pressed to exit the main menu and break the menu loop
+            if (answerA || answerB){
+                menu = false;
+            }
+        }
+    }
+}
 
 // Main Question Function
 void questionDisplay() {
@@ -106,6 +124,7 @@ void questionDisplay() {
     
     displayAnswer(answer1, answer2, varience); // Display the answers
 
+    Timer timer; // Initialise a timer
     timer.start(); // Start a timer, this will be used as a countdown rather than a timer
     while (elapsedSeconds > 0) { // Starts a countdown loop which ends once it reaches 0
         elapsedSeconds = 15 - (timer.read_ms() / 1000); // As the timer counts up from 0, it gets subtracted from 15, thus creating a countdown from 15
@@ -135,13 +154,18 @@ void questionDisplay() {
 // Main Program
 int main()
 {
-    // Display 5 questions
-    for (int i = 5; i > 0; --i) {
-        questionDisplay();
+    while (true){ // Continuosly loops, ensures that the game will always end up displaying the menu
+        mainMenu(); // Displays the menu
+        // Display 5 questions
+        for (int i = 5; i > 0; --i) {
+            questionDisplay();
+        }
+        lcd.cls(); // Clears the display
+        lcd.locate(3,0); // Sets the cursor to column 3 and row 0
+        lcd.printf("Quiz Over!"); // Displays the text 'Quiz Over!'
+        lcd.locate(2,1); // Sets the cursor to column 2 and row 1
+        lcd.printf("Score = %04d", score); // Displays the users score, ensuring it is always 4 digits long (it will be padded with zeros if it is less than 4 digits)
+        thread_sleep_for(5000); // Waits for 5 seconds before displaying the menu
+        menu = true; // Triggers the menu to display
     }
-    lcd.cls(); // Clears the display
-    lcd.locate(3,0); // Sets the cursor to column 3 and row 0
-    lcd.printf("Quiz Over!"); // Displays the text 'Quiz Over!'
-    lcd.locate(2,1); // Sets the cursor to column 2 and row 1
-    lcd.printf("Score = %04d", score); // Displays the users score, ensuring it is always 4 digits long (it will be padded with zeros if it is less than 4 digits)
 }
