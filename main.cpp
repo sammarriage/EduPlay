@@ -68,7 +68,6 @@ void displayAnswer(int x, int y, int z){
 // Initialising variables
 int x, y, op, varience, answer1, answer2;
 int score = 0;
-int elapsedSeconds = 15;
 bool menu = true;
 const char* operators[4] = {"+", "-", "*", "//"};
 int (*operations[4])(int, int) = {add, subtract, multiply, divide};
@@ -124,6 +123,7 @@ void questionDisplay() {
     
     displayAnswer(answer1, answer2, varience); // Display the answers
 
+    int elapsedSeconds = 15; // Define the 15 second countdown
     Timer timer; // Initialise a timer
     timer.start(); // Start a timer, this will be used as a countdown rather than a timer
     while (elapsedSeconds > 0) { // Starts a countdown loop which ends once it reaches 0
