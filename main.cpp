@@ -10,6 +10,10 @@ TextLCD lcd(D0, D1, D2, D3, D4, D5, TextLCD::LCD20x4); // Connect these nucleo p
 AnalogIn seedPin(A0); // Define an AnalogIn object for the floating pin A0
 AnalogIn entropyPin(A1); // Additional analog pin for entropy
 
+//Initialising the buttons
+DigitalIn answerA(D14, PullDown);
+DigitalIn answerB(D15, PullDown);
+
 // Addition function
 int add(int x, int y) {
     return x + y;
@@ -63,8 +67,11 @@ void displayAnswer(int x, int y, int z){
 
 // Initialising variables
 int x, y, op, varience, answer1, answer2;
+int score = 0;
+int elapsedSeconds = 15;
 const char* operators[4] = {"+", "-", "*", "//"};
 int (*operations[4])(int, int) = {add, subtract, multiply, divide};
+Timer timer;
 
 // Main Question Function
 void questionDisplay() {
@@ -92,25 +99,36 @@ void questionDisplay() {
         y = random(2, 9); // The reasoning for setting this number as 2-9 and not 0-9 is because dividing anything by 1 has an obvious correct answer, and dividing anything by 0 is undefined
     }
     
-    lcd.locate(0, 0); // sets the cursor to column 0 and row 0
+    lcd.locate(0, 0); // Sets the cursor to column 0 and row 0
     lcd.printf("%d %s %d = ?", x, operators[op], y); // Writes out the question by displaying: the value of x, the mathematical operator in the operators array corresponding to the value of op, the value of y, and then '= ?'
     answer1 = operations[op](x, y); // Calculates the real answer by passing x and y to the mathematical operation function in the operations array corresponding to the value of op
     answer2 = varience ? answer1 + 10 : answer1 - 10; // If varience is 1, answer 2 is 10 greater than answer 1. If varience is 0, then it is 10 less
     
     displayAnswer(answer1, answer2, varience); // Display the answers
 
-    // Countdown timer, counts down by 1 from 15 every second until it reaches 0
-    for (int i = 15; i >= 0; --i) {
-        lcd.locate(14, 0); // sets the cursor to column 14 and row 0
-        // If the number is double digits, print as normal
-        if (i > 9){
-            lcd.printf("%d", i);
+    timer.start(); // Start a timer, this will be used as a countdown rather than a timer
+    while (elapsedSeconds > 0) { // Starts a countdown loop which ends once it reaches 0
+        elapsedSeconds = 15 - (timer.read_ms() / 1000); // As the timer counts up from 0, it gets subtracted from 15, thus creating a countdown from 15
+        lcd.locate(14, 0); //Sets the cursor to column 14 and row 0
+        lcd.printf("%02d", elapsedSeconds); // Displays the countdown, ensuring it is always 2 digits long (it will be padded with zeros if it is less than 2 digits)
+        if (answerA || answerB || elapsedSeconds == 0) { // Checks if the button corresponding to answer A or B is pressed, or if the countdown is at 0
+            if (answerA || answerB) { // Checks if the button corresponding to answer A or B is presse
+                lcd.cls(); // Clears the display
+                bool correct = (answerA && !varience) || (answerB && varience); // Defines that the correct answers are if either answer A is selected when varience is 0, or if answer B is selected when varience is 1
+                score += correct ? 1500 - (timer.read_ms() / 10) : 0; // If the user got the answer correct, the milliseconds it took for the user to answer the question divided by 10 and subtracted from 1500 is added to their score. If they got the answer wrong, their score remains the same
+                lcd.locate(correct ? 4 : 3, 0); // Determines the location of the cursor in order to centre the text in the next line
+                lcd.printf(correct ? "Correct!" : "Incorrect!"); // If the user got the answer correct, the text 'Correct' is displayed, else 'Incorrect!' is displayed
+            }
+            if (elapsedSeconds == 0) { // Checks if the countdown is at 0
+                lcd.cls(); // Clears the display
+                lcd.locate(4, 0); // Sets the cursor to column 4 and row 0
+                lcd.printf("Time Up!"); // Displays the text 'Time up!'
+            }
+            lcd.locate(2, 1); // Sets the cursor to column 2 and row 1
+            lcd.printf("Score = %04d", score); // Displays the users score, ensuring it is always 4 digits long (it will be padded with zeros if it is less than 4 digits)
+            thread_sleep_for(3000); // Waits for 3 seconds before moving onto the next question
+            return; // Moves to the next question
         }
-        // If the number is a single digit, print as 0(number), this is done to ensure both columns 14 and 15 are always being used by the timer.
-        else {
-            lcd.printf("0%d", i);
-        }
-        thread_sleep_for(1000); // Wait for 1 second before displaying the next number
     }
 }
 
@@ -121,4 +139,9 @@ int main()
     for (int i = 5; i > 0; --i) {
         questionDisplay();
     }
+    lcd.cls(); // Clears the display
+    lcd.locate(3,0); // Sets the cursor to column 3 and row 0
+    lcd.printf("Quiz Over!"); // Displays the text 'Quiz Over!'
+    lcd.locate(2,1); // Sets the cursor to column 2 and row 1
+    lcd.printf("Score = %04d", score); // Displays the users score, ensuring it is always 4 digits long (it will be padded with zeros if it is less than 4 digits)
 }
